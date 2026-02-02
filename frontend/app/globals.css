@@ -1,0 +1,204 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+/* Stellar Atlas - Cosmic Theme */
+:root {
+  /* Deep space background - darker */
+  --background: oklch(0.06 0.015 270);
+  --foreground: oklch(0.92 0.01 270);
+  
+  /* Cards with subtle transparency */
+  --card: oklch(0.10 0.02 270);
+  --card-foreground: oklch(0.92 0.01 270);
+  
+  --popover: oklch(0.08 0.015 270);
+  --popover-foreground: oklch(0.92 0.01 270);
+  
+  /* Primary - Soft cosmic blue */
+  --primary: oklch(0.65 0.15 250);
+  --primary-foreground: oklch(0.98 0 0);
+  
+  /* Secondary - Deep purple accent */
+  --secondary: oklch(0.25 0.04 280);
+  --secondary-foreground: oklch(0.88 0.02 270);
+  
+  /* Muted - Subtle space gray */
+  --muted: oklch(0.22 0.02 270);
+  --muted-foreground: oklch(0.65 0.02 270);
+  
+  /* Accent - Soft silver glow */
+  --accent: oklch(0.55 0.12 280);
+  --accent-foreground: oklch(0.95 0.01 270);
+  
+  --destructive: oklch(0.55 0.2 25);
+  --destructive-foreground: oklch(0.95 0 0);
+  
+  /* Borders - Subtle silver */
+  --border: oklch(0.30 0.03 270);
+  --input: oklch(0.22 0.02 270);
+  --ring: oklch(0.55 0.12 250);
+  
+  /* Star colors for charts */
+  --chart-1: oklch(0.75 0.18 40);   /* Orange star */
+  --chart-2: oklch(0.65 0.2 250);   /* Blue star */
+  --chart-3: oklch(0.6 0.2 0);      /* Red star */
+  --chart-4: oklch(0.9 0.05 90);    /* Yellow star */
+  --chart-5: oklch(0.7 0.15 280);   /* Purple nebula */
+  
+  --radius: 0.75rem;
+  
+  --sidebar: oklch(0.10 0.02 270);
+  --sidebar-foreground: oklch(0.90 0.01 270);
+  --sidebar-primary: oklch(0.65 0.15 250);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.20 0.03 280);
+  --sidebar-accent-foreground: oklch(0.90 0.01 270);
+  --sidebar-border: oklch(0.25 0.02 270);
+  --sidebar-ring: oklch(0.55 0.12 250);
+  
+  /* Custom cosmic variables */
+  --glow-blue: oklch(0.65 0.2 250);
+  --glow-purple: oklch(0.55 0.18 280);
+  --star-yellow: oklch(0.95 0.12 90);
+  --star-orange: oklch(0.75 0.2 50);
+  --star-red: oklch(0.55 0.25 25);
+  --star-blue: oklch(0.7 0.18 240);
+  --star-white: oklch(0.98 0.02 250);
+}
+
+@theme inline {
+  --font-sans: 'Space Grotesk', 'Geist Fallback';
+  --font-mono: 'Geist Mono', 'Geist Mono Fallback';
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  
+  /* Custom cosmic colors */
+  --color-glow-blue: var(--glow-blue);
+  --color-glow-purple: var(--glow-purple);
+  --color-star-yellow: var(--star-yellow);
+  --color-star-orange: var(--star-orange);
+  --color-star-red: var(--star-red);
+  --color-star-blue: var(--star-blue);
+  --color-star-white: var(--star-white);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Cosmic animations */
+@keyframes pulse-glow {
+  0%, 100% { 
+    opacity: 0.8;
+    filter: blur(20px);
+  }
+  50% { 
+    opacity: 1;
+    filter: blur(25px);
+  }
+}
+
+@keyframes star-twinkle {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes orbit {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes drift {
+  0% { transform: translateX(0) translateY(0); }
+  25% { transform: translateX(2px) translateY(-2px); }
+  50% { transform: translateX(0) translateY(-3px); }
+  75% { transform: translateX(-2px) translateY(-1px); }
+  100% { transform: translateX(0) translateY(0); }
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.02); opacity: 1; }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 4s ease-in-out infinite;
+}
+
+.animate-star-twinkle {
+  animation: star-twinkle 3s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-orbit {
+  animation: orbit 30s linear infinite;
+}
+
+.animate-drift {
+  animation: drift 8s ease-in-out infinite;
+}
+
+.animate-breathe {
+  animation: breathe 6s ease-in-out infinite;
+}
+
+/* Starfield background */
+.starfield {
+  background-image: 
+    radial-gradient(2px 2px at 20px 30px, rgba(255,255,255,0.8), transparent),
+    radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.5), transparent),
+    radial-gradient(1px 1px at 90px 40px, rgba(255,255,255,0.6), transparent),
+    radial-gradient(2px 2px at 130px 80px, rgba(255,255,255,0.4), transparent),
+    radial-gradient(1px 1px at 160px 120px, rgba(255,255,255,0.7), transparent);
+  background-size: 200px 200px;
+  background-position: 0 0;
+}
