@@ -7,7 +7,7 @@ import { HomeScreen } from "@/components/stellar-atlas/home-screen";
 import { StarView } from "@/components/stellar-atlas/star-view";
 import { SavedStarsPanel } from "@/components/stellar-atlas/saved-stars-panel";
 import { generateStar, generateDailyStar, type StarData } from "@/lib/star-data";
-import { fetchRandomStar, fetchDailyStar } from "@/lib/api-service";
+import { fetchStarFromAPI, fetchDailyStarFromAPI } from "@/lib/api-client";
 
 type ViewState = "home" | "star" | "generating";
 
@@ -18,26 +18,24 @@ export default function StellarAtlas() {
   const [showSavedPanel, setShowSavedPanel] = useState(false);
   const [ambientMode, setAmbientMode] = useState(false);
   const [dailyStar, setDailyStar] = useState<StarData | null>(null);
-  const [useAPI, setUseAPI] = useState(true); // Toggle to use API or local generation
 
-  // Generate daily star on mount - use API if available
+  // Generate daily star on mount - TRY BACKEND FIRST
   useEffect(() => {
     const loadDailyStar = async () => {
-      if (useAPI) {
-        try {
-          const star = await fetchDailyStar();
-          setDailyStar(star);
-        } catch (error) {
-          console.error("Failed to load daily star from API, using local:", error);
-          setDailyStar(generateDailyStar());
-        }
-      } else {
+      try {
+        console.log('Attempting to fetch daily star from backend...');
+        const star = await fetchDailyStarFromAPI();
+        console.log('✅ Successfully loaded daily star from backend!', star);
+        setDailyStar(star);
+      } catch (error) {
+        console.error('❌ Backend failed, using client-side generation:', error);
+        // Fallback to client-side generation
         setDailyStar(generateDailyStar());
       }
     };
     
     loadDailyStar();
-  }, [useAPI]);
+  }, []);
 
   // Load saved stars from localStorage on mount
   useEffect(() => {
@@ -62,27 +60,31 @@ export default function StellarAtlas() {
   const handleGenerateStar = useCallback(async () => {
     setView("generating");
 
-    // Simulate a brief loading period for dramatic effect
-    setTimeout(async () => {
-      let newStar: StarData;
+    try {
+      console.log('Attempting to fetch star from backend...');
       
-      if (useAPI) {
-        try {
-          // Fetch real star from NASA API
-          newStar = await fetchRandomStar();
-        } catch (error) {
-          console.error("Failed to generate star from API, using local:", error);
-          newStar = generateStar();
-        }
-      } else {
-        // Use local generation
-        newStar = generateStar();
-      }
+      // Fetch real star from NASA backend
+      const newStar = await fetchStarFromAPI();
       
-      setCurrentStar(newStar);
-      setView("star");
-    }, 1500);
-  }, [useAPI]);
+      console.log('✅ Successfully loaded star from backend!', newStar);
+      
+      setTimeout(() => {
+        setCurrentStar(newStar);
+        setView("star");
+      }, 1500); // Keep the dramatic pause
+      
+    } catch (error) {
+      console.error("❌ Backend failed, using client-side generation:", error);
+      
+      // Fallback to client-side generation if API fails
+      setTimeout(() => {
+        const newStar = generateStar();
+        console.log('Using client-side generated star:', newStar);
+        setCurrentStar(newStar);
+        setView("star");
+      }, 1500);
+    }
+  }, []);
 
   const handleSelectDailyStar = useCallback(() => {
     if (dailyStar) {
@@ -126,7 +128,7 @@ export default function StellarAtlas() {
     <main className="relative min-h-screen bg-background overflow-hidden">
       {/* Starfield background */}
       <Starfield
-        starCount={250}
+        starCount={500}
         speed={ambientMode ? 0.2 : 0.5}
         ambient={ambientMode}
       />
@@ -201,7 +203,7 @@ export default function StellarAtlas() {
               transition={{ delay: 0.3 }}
               className="mt-8 text-muted-foreground text-sm tracking-wider"
             >
-              {useAPI ? "Fetching real star data from NASA..." : "Traveling through space..."}
+              Traveling through space...
             </motion.p>
           </motion.div>
         )}
@@ -225,12 +227,6 @@ export default function StellarAtlas() {
         onSelectStar={handleSelectSavedStar}
         onRemoveStar={handleRemoveStar}
       />
-
-      {/* API status indicator (bottom right) */}
-      <div className="fixed bottom-4 right-4 z-50 flex items-center gap-2 text-xs text-muted-foreground">
-        <div className={`w-2 h-2 rounded-full ${useAPI ? 'bg-green-500' : 'bg-yellow-500'}`} />
-        <span>{useAPI ? 'NASA Data' : 'Local Data'}</span>
-      </div>
     </main>
   );
 }

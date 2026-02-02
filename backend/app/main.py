@@ -10,8 +10,8 @@ import logging
 from typing import List
 
 # Import our models and services
-from models import StarData, StarLocation, OrbitingBody
-from services import nasa_service
+from app.models import StarData, StarLocation, OrbitingBody
+from app.services import nasa_service
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

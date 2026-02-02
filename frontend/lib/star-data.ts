@@ -12,11 +12,21 @@ export interface StarData {
     region: string;
     distanceFromEarth: string;
     distanceLightYears: number;
+    constellation?: string; 
   };
   hasOrbitingBodies: boolean;
   orbitingBodies: OrbitingBody[];
-  generatedAt: Date;
-}
+  generatedAt: Date | string;
+
+  realStar?:boolean; 
+  catalogId?:string;
+  mass?:number;
+  spectralType?:string;
+};
+
+
+
+
 
 export interface OrbitingBody {
   name: string;
