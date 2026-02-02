@@ -1,70 +1,66 @@
 """
-Data models for stellar data from NASA APIs
+Pydantic Models for Stellar Atlas API
+Compatible with Pydantic v1
 """
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import List, Optional, Literal
 from datetime import datetime
 
 
 class OrbitingBody(BaseModel):
-    """Represents a planet or other body orbiting a star"""
     name: str
     type: Literal["planet", "asteroid", "dwarf-planet", "moon"]
-    orbitRadius: float  # In AU or relative units
+    orbitRadius: float
     color: str
-    # NASA-specific fields
-    mass: Optional[float] = None  # Earth masses
-    radius: Optional[float] = None  # Earth radii
-    orbitalPeriod: Optional[float] = None  # Days
+    mass: Optional[float] = None
+    radius: Optional[float] = None
+    orbitalPeriod: Optional[float] = None
     discoveryYear: Optional[int] = None
 
 
 class StarLocation(BaseModel):
-    """Location information for a star"""
     galaxy: str = "Milky Way"
     region: str
     distanceFromEarth: str
     distanceLightYears: float
-    # NASA-specific fields
     rightAscension: Optional[str] = None
     declination: Optional[str] = None
     constellation: Optional[str] = None
 
 
 class StarData(BaseModel):
-    """Complete star data matching frontend interface"""
     id: str
     name: str
     type: Literal[
         "Red Dwarf",
-        "Orange Dwarf", 
+        "Orange Dwarf",
         "Yellow Dwarf",
         "White Dwarf",
         "Blue Giant",
         "Red Giant",
         "Neutron Star",
         "Blue Supergiant",
-        "Red Supergiant"
+        "Red Supergiant",
     ]
-    temperature: int  # Kelvin
-    sizeRatio: float  # Compared to the Sun
-    luminosity: float  # Compared to the Sun
+    temperature: int
+    sizeRatio: float
+    luminosity: float
     lifespan: str
     funFact: str
     location: StarLocation
     hasOrbitingBodies: bool
     orbitingBodies: List[OrbitingBody]
     generatedAt: datetime
-    
-    # NASA-specific additional fields
-    realStar: bool = True  # Flag to indicate this is real data
-    catalogId: Optional[str] = None  # NASA catalog identifier
-    mass: Optional[float] = None  # Solar masses
-    age: Optional[float] = None  # Billion years
-    spectralType: Optional[str] = None  # e.g., "G2V"
-    
+
+    realStar: bool = True
+    catalogId: Optional[str] = None
+    mass: Optional[float] = None
+    age: Optional[float] = None
+    spectralType: Optional[str] = None
+
     class Config:
-        json_schema_extra = {
+        # Pydantic v1 syntax
+        schema_extra = {
             "example": {
                 "id": "nasa-proxima-centauri",
                 "name": "Proxima Centauri",
@@ -79,7 +75,7 @@ class StarData(BaseModel):
                     "region": "Orion Arm",
                     "distanceFromEarth": "4.24 light years",
                     "distanceLightYears": 4.24,
-                    "constellation": "Centaurus"
+                    "constellation": "Centaurus",
                 },
                 "hasOrbitingBodies": True,
                 "orbitingBodies": [
@@ -89,12 +85,12 @@ class StarData(BaseModel):
                         "orbitRadius": 0.05,
                         "color": "#d4a5a5",
                         "mass": 1.17,
-                        "orbitalPeriod": 11.2
+                        "orbitalPeriod": 11.2,
                     }
                 ],
                 "generatedAt": "2026-02-01T00:00:00",
                 "realStar": True,
                 "catalogId": "HIP 70890",
-                "spectralType": "M5.5Ve"
+                "spectralType": "M5.5Ve",
             }
         }

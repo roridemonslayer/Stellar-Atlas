@@ -9,12 +9,7 @@ import random
 import logging
 from typing import List
 
-# We'll need to adjust these imports when you set up the actual file structure
-# For now, I'm showing you the complete structure
-import sys
-sys.path.append('.')
-
-# Import our models and services (these will be in separate files)
+# Import our models and services
 from models import StarData, StarLocation, OrbitingBody
 from services import nasa_service
 
@@ -207,6 +202,8 @@ async def list_available_stars():
     Useful for discovery/exploration features
     """
     try:
+        from services import FAMOUS_STARS
+        
         stars = [
             {
                 "name": star["name"],
@@ -215,7 +212,7 @@ async def list_available_stars():
                 "constellation": star["constellation"],
                 "hasExoplanets": star.get("hasExoplanets", False)
             }
-            for star in nasa_service.FAMOUS_STARS
+            for star in FAMOUS_STARS
         ]
         
         return {
@@ -231,10 +228,12 @@ async def list_available_stars():
 @app.get("/api/health")
 async def health_check():
     """Health check for monitoring"""
+    from services import FAMOUS_STARS
+    
     return {
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
-        "available_stars": len(nasa_service.FAMOUS_STARS)
+        "available_stars": len(FAMOUS_STARS)
     }
 
 
