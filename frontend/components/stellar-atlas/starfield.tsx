@@ -12,7 +12,6 @@ interface Star {
   twinklePhase: number;
   color?: { r: number; g: number; b: number };
 }
-
 interface Galaxy {
   x: number;
   y: number;
@@ -21,6 +20,8 @@ interface Galaxy {
   opacity: number;
   color: { r: number; g: number; b: number };
   type: "spiral" | "elliptical" | "nebula";
+  armCount?: number;        // NEW: Number of spiral arms
+  armTightness?: number;    // NEW: How tight the spiral is
 }
 
 interface StarfieldProps {
@@ -57,13 +58,13 @@ export function Starfield({
       let size: number;
       if (sizeRandom < 0.7) {
         // 70% tiny stars (background dust)
-        size = Math.random() * 0.8 + 0.2;
+        size = Math.random() * 1.0 + 0.4;
       } else if (sizeRandom < 0.92) {
         // 22% small-medium stars
-        size = Math.random() * 1.5 + 0.8;
+        size = Math.random() * 2.0 + 1.2;
       } else {
         // 8% larger, brighter stars
-        size = Math.random() * 2.5 + 1.5;
+        size = Math.random() * 3.0 + 2.0;
       }
 
       newStars.push({
@@ -71,7 +72,7 @@ export function Starfield({
         y: Math.random() * 3000 - 1500,
         z: Math.random() * 1500,
         size,
-        opacity: Math.random() * 0.5 + 0.5,
+        opacity: Math.random() * 0.3 + 0.07,
         twinkleSpeed: Math.random() * 0.02 + 0.005,
         twinklePhase: Math.random() * Math.PI * 2,
         color: starColors[Math.floor(Math.random() * starColors.length)],
@@ -84,20 +85,33 @@ export function Starfield({
   const galaxies = useMemo(() => {
     const newGalaxies: Galaxy[] = [];
     const galaxyColors = [
-      { r: 100, g: 120, b: 180 }, // Blue nebula
-      { r: 150, g: 100, b: 160 }, // Purple nebula
-      { r: 180, g: 140, b: 100 }, // Orange/brown galaxy
-      { r: 120, g: 160, b: 140 }, // Teal nebula
-      { r: 160, g: 120, b: 180 }, // Violet galaxy
-    ];
+    { r: 180, g: 200, b: 255 }, // Blue (young stars)
+    { r: 255, g: 220, b: 180 }, // Yellow-white (mixed age)
+    { r: 255, g: 200, b: 150 }, // Orange (older stars)
+    { r: 200, g: 180, b: 255 }, // Purple (star-forming regions)
+    { r: 255, g: 180, b: 200 }, // Pink (emission nebulae)
+    { r: 160, g: 200, b: 240 }, // Bright blue
+    { r: 240, g: 220, b: 200 }, // Warm white
+];
 
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 20; i++) {
+      const typeRandom = Math.random();
+      let type: Galaxy["type"];
+      
+      // 50% spiral, 30% elliptical, 20% nebula (realistic distribution)
+      if (typeRandom < 0.5) {
+        type = "spiral";
+      } else if (typeRandom < 0.8) {
+        type = "elliptical";
+      } else {
+        type = "nebula";
+      }
       newGalaxies.push({
         x: Math.random(),
         y: Math.random(),
         size: Math.random() * 150 + 80,
         rotation: Math.random() * Math.PI * 2,
-        opacity: Math.random() * 0.15 + 0.05,
+        opacity: Math.random() * 0.25 + 0.15,
         color: galaxyColors[Math.floor(Math.random() * galaxyColors.length)],
         type: ["spiral", "elliptical", "nebula"][
           Math.floor(Math.random() * 3)
@@ -273,7 +287,7 @@ export function Starfield({
 
         ctx.beginPath();
         ctx.fillStyle = gradient;
-        ctx.arc(x, y, size * 3, 0, Math.PI * 2);
+        ctx.arc(x, y, size * 4, 0, Math.PI * 2);
         ctx.fill();
 
         // Core of the star - brighter
