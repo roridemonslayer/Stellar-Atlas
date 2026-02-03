@@ -36,6 +36,7 @@ class StarData(BaseModel):
         "Orange Dwarf",
         "Yellow Dwarf",
         "White Dwarf",
+        "White Star",          # A-type main sequence (Sirius, Vega, Altair)
         "Blue Giant",
         "Red Giant",
         "Neutron Star",

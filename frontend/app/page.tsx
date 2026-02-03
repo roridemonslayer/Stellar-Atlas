@@ -6,8 +6,8 @@ import { Starfield } from "@/components/stellar-atlas/starfield";
 import { HomeScreen } from "@/components/stellar-atlas/home-screen";
 import { StarView } from "@/components/stellar-atlas/star-view";
 import { SavedStarsPanel } from "@/components/stellar-atlas/saved-stars-panel";
-import { generateStar, generateDailyStar, type StarData } from "@/lib/star-data";
-import { fetchStarFromAPI, fetchDailyStarFromAPI } from "@/lib/api-client";
+import { type StarData } from "@/lib/star-data";
+import { fetchRandomStar, fetchDailyStar } from "@/lib/api-services";
 
 type ViewState = "home" | "star" | "generating";
 
@@ -19,21 +19,15 @@ export default function StellarAtlas() {
   const [ambientMode, setAmbientMode] = useState(false);
   const [dailyStar, setDailyStar] = useState<StarData | null>(null);
 
-  // Generate daily star on mount - TRY BACKEND FIRST
+  // Load the daily star on mount.
+  // fetchDailyStar already falls back to client-side generation internally,
+  // so no try/catch or manual fallback is needed here.
   useEffect(() => {
     const loadDailyStar = async () => {
-      try {
-        console.log('Attempting to fetch daily star from backend...');
-        const star = await fetchDailyStarFromAPI();
-        console.log('✅ Successfully loaded daily star from backend!', star);
-        setDailyStar(star);
-      } catch (error) {
-        console.error('❌ Backend failed, using client-side generation:', error);
-        // Fallback to client-side generation
-        setDailyStar(generateDailyStar());
-      }
+      const star = await fetchDailyStar();
+      setDailyStar(star);
     };
-    
+
     loadDailyStar();
   }, []);
 
@@ -57,33 +51,17 @@ export default function StellarAtlas() {
     }
   }, [savedStars]);
 
+  // fetchRandomStar already falls back to client-side generation internally,
+  // so no try/catch or manual fallback is needed here either.
   const handleGenerateStar = useCallback(async () => {
     setView("generating");
 
-    try {
-      console.log('Attempting to fetch star from backend...');
-      
-      // Fetch real star from NASA backend
-      const newStar = await fetchStarFromAPI();
-      
-      console.log('✅ Successfully loaded star from backend!', newStar);
-      
-      setTimeout(() => {
-        setCurrentStar(newStar);
-        setView("star");
-      }, 1500); // Keep the dramatic pause
-      
-    } catch (error) {
-      console.error("❌ Backend failed, using client-side generation:", error);
-      
-      // Fallback to client-side generation if API fails
-      setTimeout(() => {
-        const newStar = generateStar();
-        console.log('Using client-side generated star:', newStar);
-        setCurrentStar(newStar);
-        setView("star");
-      }, 1500);
-    }
+    const newStar = await fetchRandomStar();
+
+    setTimeout(() => {
+      setCurrentStar(newStar);
+      setView("star");
+    }, 1500); // Keep the dramatic pause
   }, []);
 
   const handleSelectDailyStar = useCallback(() => {

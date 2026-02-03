@@ -44,8 +44,10 @@ FAMOUS_STARS = [
         "hasExoplanets": False
     },
     {
+        # Sirius is spectral type A1V — the "V" means main sequence, not giant.
+        # Its size ratio of 1.71 confirms this.  Corrected from "Blue Giant".
         "name": "Sirius",
-        "type": "Blue Giant",
+        "type": "White Star",
         "temperature": 9940,
         "sizeRatio": 1.71,
         "luminosity": 25.4,
@@ -72,8 +74,10 @@ FAMOUS_STARS = [
         "hasExoplanets": False
     },
     {
+        # Vega is spectral type A0V — same luminosity class as Sirius.
+        # Corrected from "Blue Giant" to "White Star".
         "name": "Vega",
-        "type": "Blue Giant",
+        "type": "White Star",
         "temperature": 9602,
         "sizeRatio": 2.362,
         "luminosity": 40.12,
@@ -170,8 +174,11 @@ FAMOUS_STARS = [
         "hasExoplanets": False
     },
     {
+        # Altair is spectral type A7V — main sequence, not a white dwarf remnant.
+        # Its mass (1.79) and size ratio (1.79) confirm an active main-sequence star.
+        # Corrected from "White Dwarf".
         "name": "Altair",
-        "type": "White Dwarf",
+        "type": "White Star",
         "temperature": 7550,
         "sizeRatio": 1.79,
         "luminosity": 10.6,
@@ -310,11 +317,11 @@ EXOPLANET_DATA = {
 
 class NASAStarService:
     """Fetches and processes real star data"""
-    
+
     def get_random_real_star(self):
         """Get a random star from our database"""
         return random.choice(FAMOUS_STARS).copy()
-    
+
     def get_star_by_name(self, name: str) -> Optional[dict]:
         """Get a specific star by name"""
         name_lower = name.lower()
@@ -322,11 +329,11 @@ class NASAStarService:
             if star["name"].lower() == name_lower:
                 return star.copy()
         return None
-    
+
     def fetch_exoplanet_data(self, star_name: str) -> List[dict]:
         """Fetch exoplanet data for a star"""
         return EXOPLANET_DATA.get(star_name, [])
-    
+
     def get_region_for_constellation(self, constellation: str) -> str:
         """Map constellation to galactic region"""
         region_map = {
@@ -345,13 +352,17 @@ class NASAStarService:
             "Aquarius": "Orion Arm"
         }
         return region_map.get(constellation, "Orion Arm")
-    
+
     def calculate_lifespan(self, star_type: str, mass: float) -> str:
-        """Calculate stellar lifespan"""
+        """Calculate stellar lifespan based on type and mass"""
         lifespan_map = {
             "Red Dwarf": f"{int(4 * (1 / max(mass, 0.1)) ** 2.5)} trillion years",
             "Orange Dwarf": f"{int(20 * (1 / max(mass, 0.5)) ** 2.5)} billion years",
             "Yellow Dwarf": f"{int(10 * (1 / max(mass, 0.8)) ** 2.5)} billion years",
+            # A-type main sequence stars — shorter-lived than Sun-like stars
+            # due to higher mass.  Formula yields ~1-2 billion years for
+            # typical masses in this range (1.7–2.1 solar masses).
+            "White Star": f"{int(10 * (1 / max(mass, 1.5)) ** 2.5)} billion years",
             "White Dwarf": "Effectively eternal (cooling slowly)",
             "Blue Giant": f"{int(500 / max(mass, 5))} million years",
             "Red Giant": "Currently in final stages (few million years)",

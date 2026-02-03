@@ -11,7 +11,7 @@ from typing import List
 
 # Import our models and services
 from app.models import StarData, StarLocation, OrbitingBody
-from app.services import nasa_service
+from app.services import nasa_service, FAMOUS_STARS
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -40,14 +40,14 @@ app.add_middleware(
 
 def format_star_data(raw_star: dict) -> StarData:
     """Convert raw star data to StarData model matching frontend interface"""
-    
+
     # Get exoplanet data if star has planets
     exoplanets = []
     if raw_star.get("hasExoplanets"):
         planet_data = nasa_service.fetch_exoplanet_data(raw_star["name"])
-        
+
         colors = ["#a8d5ba", "#d4a5a5", "#a5c4d4", "#d4cfa5", "#c4a5d4", "#d4b5a5"]
-        
+
         for i, planet in enumerate(planet_data):
             exoplanets.append(OrbitingBody(
                 name=planet["name"],
@@ -57,16 +57,16 @@ def format_star_data(raw_star: dict) -> StarData:
                 mass=planet.get("mass"),
                 radius=planet.get("radius"),
                 orbitalPeriod=planet.get("period"),
-                discoveryYear=None  # Could add this from NASA data
+                discoveryYear=None
             ))
-    
+
     # Format distance
     distance = raw_star["distance"]
     if distance > 1000:
         distance_str = f"{distance / 1000:.1f}k light years"
     else:
         distance_str = f"{distance:.2f} light years"
-    
+
     # Create star location
     location = StarLocation(
         galaxy="Milky Way",
@@ -75,16 +75,18 @@ def format_star_data(raw_star: dict) -> StarData:
         distanceLightYears=distance,
         constellation=raw_star["constellation"]
     )
-    
+
     # Calculate lifespan
     lifespan = nasa_service.calculate_lifespan(
         raw_star["type"],
         raw_star.get("mass", 1.0)
     )
-    
-    # Create unique ID
-    star_id = f"nasa-{raw_star['name'].lower().replace(' ', '-')}-{int(datetime.now().timestamp())}"
-    
+
+    # Stable ID from name only — no timestamp.
+    # The frontend uses id equality to track saved stars, so this must
+    # be the same value every time the same star is returned.
+    star_id = f"nasa-{raw_star['name'].lower().replace(' ', '-')}"
+
     return StarData(
         id=star_id,
         name=raw_star["name"],
@@ -128,15 +130,10 @@ async def generate_star():
     This replaces the frontend's generateStar() function
     """
     try:
-        # Get random star from our database
         raw_star = nasa_service.get_random_real_star()
-        
-        # Format it for the frontend
         star = format_star_data(raw_star)
-        
         logger.info(f"Generated star: {star.name}")
         return star
-        
     except Exception as e:
         logger.error(f"Error generating star: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error generating star: {str(e)}")
@@ -145,65 +142,33 @@ async def generate_star():
 @app.get("/api/stars/daily", response_model=StarData)
 async def get_daily_star():
     """
-    Get the star of the day (changes daily)
-    Uses date-based seeding to ensure same star for all users on same day
+    Get the star of the day (changes daily).
+    Uses date-based seeding to ensure same star for all users on same day.
     """
     try:
-        # Use today's date as seed
         today = datetime.now()
         seed = today.year * 10000 + today.month * 100 + today.day
-        
-        # Use seed to pick a consistent star for the day
+
         random.seed(seed)
         raw_star = nasa_service.get_random_real_star()
-        random.seed()  # Reset seed
-        
+        random.seed()  # Reset to system entropy
+
         star = format_star_data(raw_star)
-        
         logger.info(f"Daily star for {today.date()}: {star.name}")
         return star
-        
     except Exception as e:
         logger.error(f"Error getting daily star: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error getting daily star: {str(e)}")
 
 
-@app.get("/api/stars/{star_name}", response_model=StarData)
-async def get_star_by_name(star_name: str):
-    """
-    Get a specific star by name
-    Example: /api/stars/Betelgeuse
-    """
-    try:
-        # Clean up the name
-        star_name = star_name.replace("-", " ").replace("_", " ")
-        
-        raw_star = nasa_service.get_star_by_name(star_name)
-        
-        if not raw_star:
-            raise HTTPException(status_code=404, detail=f"Star '{star_name}' not found")
-        
-        star = format_star_data(raw_star)
-        
-        logger.info(f"Retrieved star: {star.name}")
-        return star
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error getting star {star_name}: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error retrieving star: {str(e)}")
-
-
+# ─── /list MUST come before /{star_name} ────────────────────────────────────
+# FastAPI matches routes top-to-bottom.  If {star_name} is first, a request to
+# /api/stars/list hits that wildcard with star_name="list" and never reaches
+# this handler.
 @app.get("/api/stars/list")
 async def list_available_stars():
-    """
-    List all available stars in the database
-    Useful for discovery/exploration features
-    """
+    """List all available stars in the database."""
     try:
-        from services import FAMOUS_STARS
-        
         stars = [
             {
                 "name": star["name"],
@@ -214,22 +179,38 @@ async def list_available_stars():
             }
             for star in FAMOUS_STARS
         ]
-        
-        return {
-            "count": len(stars),
-            "stars": stars
-        }
-        
+        return {"count": len(stars), "stars": stars}
     except Exception as e:
         logger.error(f"Error listing stars: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error listing stars: {str(e)}")
 
 
+@app.get("/api/stars/{star_name}", response_model=StarData)
+async def get_star_by_name(star_name: str):
+    """
+    Get a specific star by name.
+    Example: /api/stars/Betelgeuse
+    """
+    try:
+        star_name = star_name.replace("-", " ").replace("_", " ")
+        raw_star = nasa_service.get_star_by_name(star_name)
+
+        if not raw_star:
+            raise HTTPException(status_code=404, detail=f"Star '{star_name}' not found")
+
+        star = format_star_data(raw_star)
+        logger.info(f"Retrieved star: {star.name}")
+        return star
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting star {star_name}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error retrieving star: {str(e)}")
+
+
 @app.get("/api/health")
 async def health_check():
     """Health check for monitoring"""
-    from services import FAMOUS_STARS
-    
     return {
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
