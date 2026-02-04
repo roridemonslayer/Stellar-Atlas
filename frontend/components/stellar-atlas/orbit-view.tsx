@@ -76,8 +76,8 @@ export function OrbitView({ star }: OrbitViewProps) {
         to   { transform: rotate(360deg); }
       }
       @keyframes counter-orbit {
-        from { transform: translateX(-50%) rotate(0deg); }
-        to   { transform: translateX(-50%) rotate(-360deg); }
+        from { transform: translate(-50%, -50%) rotate(0deg); }
+        to   { transform: translate(-50%, -50%) rotate(-360deg); }
       }
     `;
     const style = document.createElement("style");
@@ -164,13 +164,12 @@ export function OrbitView({ star }: OrbitViewProps) {
               animationDelay: `${animDelay}s`,
             }}
           >
-            {/* Planet dot — counter-rotates so it doesn't spin in place */}
+            {/* Planet dot — positioned at top of orbit ring, counter-rotates */}
             <div
               className="absolute cursor-pointer z-20"
               style={{
                 top:       0,
                 left:      "50%",
-                transform: "translateX(-50%)",
                 animation: `counter-orbit ${orbitDuration}s linear infinite`,
                 animationDelay: `${animDelay}s`,
               }}

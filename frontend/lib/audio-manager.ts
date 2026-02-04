@@ -154,3 +154,6 @@ export class AudioManager {
 
 // Singleton instance — import and use directly
 export const audioManager = new AudioManager();
+
+// Also export the class for type purposes if needed
+export type { AudioManager };

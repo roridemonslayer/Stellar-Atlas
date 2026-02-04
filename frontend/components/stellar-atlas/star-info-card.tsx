@@ -179,6 +179,20 @@ export function StarLocationCard({ star, delay = 0 }: StarInfoCardProps) {
           </span>
         </motion.div>
 
+        {star.location.constellation && (
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: delay + 0.25 }}
+            className="flex justify-between items-center"
+          >
+            <span className="text-sm text-muted-foreground">Constellation</span>
+            <span className="text-sm font-medium text-foreground">
+              {star.location.constellation}
+            </span>
+          </motion.div>
+        )}
+
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
