@@ -106,7 +106,7 @@ export default function StellarAtlas() {
     <main className="relative min-h-screen bg-background overflow-hidden">
       {/* Starfield background */}
       <Starfield
-        starCount={500}
+        starCount={5900}
         speed={ambientMode ? 0.2 : 0.5}
         ambient={ambientMode}
       />

@@ -2,24 +2,23 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import type { StarData } from "@/lib/star-data";
-import { X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { X, Trash2, BookMarked } from "lucide-react";
 
 interface SavedStarsPanelProps {
-  isOpen: boolean;
-  onClose: () => void;
-  savedStars: StarData[];
-  onSelectStar: (star: StarData) => void;
-  onRemoveStar: (starId: string) => void;
+  isOpen:         boolean;
+  onClose:        () => void;
+  savedStars:     StarData[];
+  onSelectStar:   (star: StarData) => void;
+  onRemoveStar:   (starId: string) => void;
 }
 
-function getStarColor(temperature: number): string {
-  if (temperature < 3500) return "#ff6b4a";
-  if (temperature < 5000) return "#ffb366";
-  if (temperature < 6000) return "#ffcc00";
-  if (temperature < 7500) return "#fff5cc";
-  if (temperature < 10000) return "#ffffff";
-  if (temperature < 30000) return "#99ccff";
-  return "#3366cc";
+// Tiny inline star color based on temperature — mirrors star-orb logic
+function getStarGlow(temperature: number): string {
+  if (temperature > 10000) return "#99ccff";
+  if (temperature > 6000)  return "#ffcc00";
+  if (temperature > 4000)  return "#ffb366";
+  return "#ff6b4a";
 }
 
 export function SavedStarsPanel({
@@ -30,125 +29,138 @@ export function SavedStarsPanel({
   onRemoveStar,
 }: SavedStarsPanelProps) {
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Backdrop */}
+    <>
+      {/* ── Backdrop ──────────────────────────────────────────── */}
+      <AnimatePresence>
+        {isOpen && (
           <motion.div
+            key="backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="fixed inset-0 bg-background/60 backdrop-blur-sm z-40"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30"
             onClick={onClose}
           />
+        )}
+      </AnimatePresence>
 
-          {/* Panel */}
-          <motion.div
+      {/* ── Slide-in panel ────────────────────────────────────── */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.aside
+            key="panel"
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
-            className="fixed top-0 right-0 h-full w-full max-w-sm bg-card/90 backdrop-blur-lg border-l border-border/50 z-50 overflow-hidden"
+            transition={{ duration: 0.35, ease: [0.32, 0.72, 0, 1] }}
+            className="fixed top-0 right-0 h-full w-80 max-w-[90vw] z-40
+                       bg-black/80 backdrop-blur-xl border-l border-white/10
+                       flex flex-col"
           >
-            <div className="flex flex-col h-full">
-              {/* Header */}
-              <div className="flex items-center justify-between p-6 border-b border-border/30">
-                <div>
-                  <h2 className="text-xl font-semibold text-foreground">Saved Stars</h2>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {savedStars.length} {savedStars.length === 1 ? "star" : "stars"} in your
-                    collection
-                  </p>
-                </div>
-                <button
-                  onClick={onClose}
-                  className="p-2 rounded-full hover:bg-secondary/50 transition-colors"
-                  aria-label="Close panel"
-                >
-                  <X className="w-5 h-5 text-muted-foreground" />
-                </button>
-              </div>
-
-              {/* Stars list */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                {savedStars.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full text-center px-4">
-                    <div className="w-16 h-16 rounded-full bg-secondary/30 flex items-center justify-center mb-4">
-                      <svg
-                        className="w-8 h-8 text-muted-foreground"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={1.5}
-                          d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-                        />
-                      </svg>
-                    </div>
-                    <p className="text-muted-foreground">No saved stars yet</p>
-                    <p className="text-sm text-muted-foreground/70 mt-1">
-                      Generate a star and save it to your collection
-                    </p>
-                  </div>
-                ) : (
-                  <AnimatePresence mode="popLayout">
-                    {savedStars.map((star, index) => (
-                      <motion.div
-                        key={star.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, x: 50 }}
-                        transition={{ duration: 0.3, delay: index * 0.05 }}
-                        className="group relative bg-secondary/30 hover:bg-secondary/50 border border-border/30 rounded-xl p-4 cursor-pointer transition-colors"
-                        onClick={() => onSelectStar(star)}
-                      >
-                        <div className="flex items-center gap-4">
-                          {/* Star preview */}
-                          <div
-                            className="w-10 h-10 rounded-full flex-shrink-0"
-                            style={{
-                              background: `radial-gradient(circle, ${getStarColor(star.temperature)}, ${getStarColor(star.temperature)}88)`,
-                              boxShadow: `0 0 15px ${getStarColor(star.temperature)}44`,
-                            }}
-                          />
-
-                          {/* Star info */}
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-foreground truncate">{star.name}</p>
-                            <p className="text-xs text-muted-foreground">{star.type}</p>
-                          </div>
-
-                          {/* Remove button */}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onRemoveStar(star.id);
-                            }}
-                            className="opacity-0 group-hover:opacity-100 p-1.5 rounded-full hover:bg-destructive/20 transition-all"
-                            aria-label={`Remove ${star.name} from saved stars`}
-                          >
-                            <X className="w-4 h-4 text-muted-foreground hover:text-destructive" />
-                          </button>
-                        </div>
-
-                        {/* Additional info */}
-                        <div className="mt-3 pt-3 border-t border-border/20 flex justify-between text-xs text-muted-foreground">
-                          <span>{star.location.galaxy}</span>
-                          <span>{star.location.distanceFromEarth}</span>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </AnimatePresence>
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 pt-6 pb-4 border-b border-white/10">
+              <div className="flex items-center gap-2">
+                <BookMarked className="w-4 h-4 text-white/60" />
+                <h2 className="text-sm font-semibold text-white">Saved Stars</h2>
+                {savedStars.length > 0 && (
+                  <span className="text-xs text-white/30">({savedStars.length})</span>
                 )}
               </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onClose}
+                className="text-white/40 hover:text-white p-1.5 h-auto"
+              >
+                <X className="w-4 h-4" />
+              </Button>
             </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+
+            {/* ── Star list ─────────────────────────────────────── */}
+            <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1">
+              <AnimatePresence>
+                {savedStars.length === 0 ? (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="flex flex-col items-center justify-center h-64 text-center px-4"
+                  >
+                    <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-3">
+                      <BookMarked className="w-5 h-5 text-white/20" />
+                    </div>
+                    <p className="text-sm text-white/40">No saved stars yet</p>
+                    <p className="text-xs text-white/20 mt-1">
+                      Bookmark stars from their detail view
+                    </p>
+                  </motion.div>
+                ) : (
+                  savedStars.map((star, index) => {
+                    const glow = getStarGlow(star.temperature);
+                    return (
+                      <motion.div
+                        key={star.id}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                        transition={{ duration: 0.25, delay: index * 0.04 }}
+                        className="group flex items-center gap-3 px-3 py-2.5 rounded-xl
+                                   hover:bg-white/5 transition-colors duration-200 cursor-pointer"
+                        onClick={() => onSelectStar(star)}
+                      >
+                        {/* Mini star orb */}
+                        <div className="relative flex-shrink-0">
+                          <div
+                            className="w-8 h-8 rounded-full"
+                            style={{
+                              background: `radial-gradient(circle, white 0%, ${glow} 60%, ${glow}88 100%)`,
+                              boxShadow: `0 0 10px ${glow}66`,
+                            }}
+                          />
+                        </div>
+
+                        {/* Info */}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-white truncate">{star.name}</p>
+                          <p className="text-xs text-white/35">{star.type}</p>
+                        </div>
+
+                        {/* Delete button — appears on hover */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRemoveStar(star.id);
+                          }}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity
+                                     text-white/30 hover:text-red-400 p-1.5 h-auto"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </motion.div>
+                    );
+                  })
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* ── Footer: clear all ───────────────────────────── */}
+            {savedStars.length > 0 && (
+              <div className="border-t border-white/10 px-5 py-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => savedStars.forEach((s) => onRemoveStar(s.id))}
+                  className="w-full text-white/30 hover:text-red-400 text-xs"
+                >
+                  Clear all saved stars
+                </Button>
+              </div>
+            )}
+          </motion.aside>
+        )}
+      </AnimatePresence>
+    </>
   );
 }

@@ -1,8 +1,9 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import type { StarData, OrbitingBody } from "@/lib/star-data";
+import { audioManager } from "@/lib/audio-manager";
 
 interface OrbitViewProps {
   star: StarData;
@@ -18,128 +19,242 @@ function getStarColor(temperature: number): string {
   return "#3366cc";
 }
 
-export function OrbitView({ star }: OrbitViewProps) {
-  const [hoveredBody, setHoveredBody] = useState<OrbitingBody | null>(null);
-  const starColor = getStarColor(star.temperature);
+// Fallback planets if the star has none
+const FALLBACK_BODIES: OrbitingBody[] = [
+  { name: "Ignis-1",  type: "planet",       orbitRadius: 70,  color: "#d4a5a5" },
+  { name: "Terra-2",  type: "planet",       orbitRadius: 105, color: "#a8d5ba" },
+  { name: "Frost-3",  type: "dwarf-planet", orbitRadius: 140, color: "#a5c4d4" },
+  { name: "Dust-4",   type: "asteroid",     orbitRadius: 165, color: "#c4b896" },
+];
 
-  // Generate orbit rings if the star has orbiting bodies
-  const orbits = star.orbitingBodies.length > 0
+// Planet pixel size by type
+function getPlanetSize(type: OrbitingBody["type"]): number {
+  switch (type) {
+    case "planet":       return 12;
+    case "dwarf-planet": return 8;
+    case "moon":         return 5;
+    case "asteroid":     return 4;
+  }
+}
+
+export function OrbitView({ star }: OrbitViewProps) {
+  const [hoveredBody, setHoveredBody]   = useState<OrbitingBody | null>(null);
+  const [activeBody, setActiveBody]     = useState<OrbitingBody | null>(null);
+  const containerRef                    = useRef<HTMLDivElement>(null);
+  const starColor                       = getStarColor(star.temperature);
+
+  const bodies = star.orbitingBodies.length > 0
     ? star.orbitingBodies
-    : [
-        { name: "Inner Zone", type: "asteroid" as const, orbitRadius: 60, color: "#666" },
-        { name: "Habitable Zone", type: "planet" as const, orbitRadius: 100, color: "#4a9" },
-        { name: "Outer Zone", type: "dwarf-planet" as const, orbitRadius: 140, color: "#88a" },
-      ];
+    : FALLBACK_BODIES;
+
+  // ── Audio lifecycle ──────────────────────────────────────────────
+  // Play tone when a planet becomes active, stop on change / unmount
+  useEffect(() => {
+    if (activeBody) {
+      audioManager.playPlanetTone(activeBody.name, activeBody.color);
+    }
+    return () => {
+      if (activeBody) {
+        audioManager.stopPlanetTone(activeBody.name);
+      }
+    };
+  }, [activeBody]);
+
+  // Stop all tones when the whole OrbitView unmounts
+  useEffect(() => {
+    return () => audioManager.stopAll();
+  }, []);
+
+  // ── Inject keyframes once ────────────────────────────────────────
+  useEffect(() => {
+    const id = "stellar-orbit-keyframes";
+    if (document.getElementById(id)) return;
+
+    const css = `
+      @keyframes orbit {
+        from { transform: rotate(0deg); }
+        to   { transform: rotate(360deg); }
+      }
+      @keyframes counter-orbit {
+        from { transform: translateX(-50%) rotate(0deg); }
+        to   { transform: translateX(-50%) rotate(-360deg); }
+      }
+    `;
+    const style = document.createElement("style");
+    style.id   = id;
+    style.textContent = css;
+    document.head.appendChild(style);
+  }, []);
+
+  // ── Click handler: toggle a planet's tone ───────────────────────
+  const handlePlanetClick = useCallback((e: React.MouseEvent, body: OrbitingBody) => {
+    e.stopPropagation();
+    setActiveBody((prev) =>
+      prev?.name === body.name ? null : body
+    );
+  }, []);
+
+  // ── Click on empty space: deactivate ─────────────────────────────
+  const handleBackdropClick = useCallback(() => {
+    setActiveBody(null);
+  }, []);
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.8 }}
-      className="relative w-full aspect-square max-w-md mx-auto"
+    <div
+      ref={containerRef}
+      onClick={handleBackdropClick}
+      className="relative mx-auto flex items-center justify-center"
+      style={{ width: 380, height: 380 }}
     >
-      {/* Central star */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+      {/* ── Orbit rings ────────────────────────────────────────── */}
+      {bodies.map((body) => {
+        const size = body.orbitRadius * 2;
+        return (
+          <div
+            key={`ring-${body.name}`}
+            className="absolute rounded-full pointer-events-none"
+            style={{
+              width:  size,
+              height: size,
+              top:    `calc(50% - ${size / 2}px)`,
+              left:   `calc(50% - ${size / 2}px)`,
+              border: "1px solid rgba(255,255,255,0.08)",
+              boxShadow: activeBody?.name === body.name
+                ? `0 0 12px ${body.color}44`
+                : "none",
+              transition: "box-shadow 0.4s ease",
+            }}
+          />
+        );
+      })}
+
+      {/* ── Central star ───────────────────────────────────────── */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
         <motion.div
-          animate={{
-            scale: [1, 1.1, 1],
-            opacity: [0.8, 1, 0.8],
-          }}
-          transition={{
-            duration: 3,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-          className="w-12 h-12 rounded-full"
+          animate={{ scale: [1, 1.08, 1], opacity: [0.85, 1, 0.85] }}
+          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+          className="w-14 h-14 rounded-full"
           style={{
-            background: `radial-gradient(circle, ${starColor}, ${starColor}88)`,
-            boxShadow: `0 0 30px ${starColor}88, 0 0 60px ${starColor}44`,
+            background: `radial-gradient(circle, white 0%, ${starColor} 50%, ${starColor}88 100%)`,
+            boxShadow: `0 0 40px ${starColor}66, 0 0 80px ${starColor}33`,
           }}
         />
       </div>
 
-      {/* Orbit rings and bodies */}
-      {orbits.map((body, index) => {
-        const orbitDuration = 20 + index * 10;
-        const size = body.orbitRadius * 2;
+      {/* ── Orbiting planets ───────────────────────────────────── */}
+      {bodies.map((body, index) => {
+        const size          = body.orbitRadius * 2;
+        const planetSize    = getPlanetSize(body.type);
+        const orbitDuration = 25 + index * 8;   // stagger speeds
+        const animDelay     = -(index * (orbitDuration / bodies.length)); // stagger positions
+
+        const isActive  = activeBody?.name  === body.name;
+        const isHovered = hoveredBody?.name === body.name;
 
         return (
           <div
-            key={body.name}
-            className="absolute top-1/2 left-1/2"
+            key={`orbit-${body.name}`}
+            className="absolute"
             style={{
-              width: size,
+              width:  size,
               height: size,
-              marginLeft: -size / 2,
-              marginTop: -size / 2,
+              top:    `calc(50% - ${size / 2}px)`,
+              left:   `calc(50% - ${size / 2}px)`,
+              animation: `orbit ${orbitDuration}s linear infinite`,
+              animationDelay: `${animDelay}s`,
             }}
           >
-            {/* Orbit path */}
+            {/* Planet dot — counter-rotates so it doesn't spin in place */}
             <div
-              className="absolute inset-0 rounded-full border border-border/30"
+              className="absolute cursor-pointer z-20"
               style={{
-                boxShadow: "inset 0 0 20px rgba(255,255,255,0.03)",
+                top:       0,
+                left:      "50%",
+                transform: "translateX(-50%)",
+                animation: `counter-orbit ${orbitDuration}s linear infinite`,
+                animationDelay: `${animDelay}s`,
               }}
-            />
-
-            {/* Orbiting body */}
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{
-                duration: orbitDuration,
-                repeat: Infinity,
-                ease: "linear",
-              }}
-              className="absolute inset-0"
-              style={{ transformOrigin: "center center" }}
+              onClick={(e) => handlePlanetClick(e, body)}
+              onMouseEnter={() => setHoveredBody(body)}
+              onMouseLeave={() => setHoveredBody(null)}
             >
-              <motion.div
-                className="absolute cursor-pointer"
-                style={{
-                  top: 0,
-                  left: "50%",
-                  transform: "translateX(-50%)",
-                }}
-                onMouseEnter={() => setHoveredBody(body)}
-                onMouseLeave={() => setHoveredBody(null)}
-                whileHover={{ scale: 1.5 }}
-              >
-                <div
-                  className="rounded-full"
+              {/* Glow ring when active */}
+              {isActive && (
+                <motion.div
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: [1, 1.6, 1], opacity: [0.6, 0.2, 0.6] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                  className="absolute rounded-full pointer-events-none"
                   style={{
-                    width: body.type === "planet" ? 10 : body.type === "dwarf-planet" ? 6 : 4,
-                    height: body.type === "planet" ? 10 : body.type === "dwarf-planet" ? 6 : 4,
-                    background: body.color,
-                    boxShadow: `0 0 10px ${body.color}66`,
+                    width:  planetSize * 3.5,
+                    height: planetSize * 3.5,
+                    top:    `calc(50% - ${(planetSize * 3.5) / 2}px)`,
+                    left:   `calc(50% - ${(planetSize * 3.5) / 2}px)`,
+                    background: `radial-gradient(circle, ${body.color}88, transparent 70%)`,
                   }}
                 />
-              </motion.div>
-            </motion.div>
+              )}
+
+              {/* Planet body */}
+              <div
+                className="rounded-full transition-transform duration-200"
+                style={{
+                  width:     planetSize,
+                  height:    planetSize,
+                  background: isHovered || isActive
+                    ? `radial-gradient(circle at 35% 35%, white, ${body.color})`
+                    : `radial-gradient(circle at 35% 35%, ${body.color}dd, ${body.color})`,
+                  boxShadow: isActive
+                    ? `0 0 14px ${body.color}, 0 0 28px ${body.color}66`
+                    : `0 0 6px ${body.color}66`,
+                  transform: isHovered ? "scale(1.4)" : "scale(1)",
+                }}
+              />
+            </div>
           </div>
         );
       })}
 
-      {/* Hover tooltip */}
-      {hoveredBody && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-card/80 backdrop-blur-md border border-border/50 rounded-lg px-4 py-2"
-        >
-          <p className="text-sm font-medium text-foreground">{hoveredBody.name}</p>
-          <p className="text-xs text-muted-foreground capitalize">{hoveredBody.type}</p>
-        </motion.div>
-      )}
+      {/* ── Tooltip (hover or active) ─────────────────────────── */}
+      <AnimatePresence>
+        {(hoveredBody || activeBody) && (
+          <motion.div
+            key={(hoveredBody || activeBody)!.name}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 0.2 }}
+            className="absolute bottom-0 left-1/2 -translate-x-1/2 z-30
+                       bg-black/70 backdrop-blur-md border border-white/10
+                       rounded-xl px-5 py-3 text-center pointer-events-none"
+          >
+            <div className="flex items-center justify-center gap-2 mb-1">
+              <div
+                className="w-3 h-3 rounded-full"
+                style={{ background: (hoveredBody || activeBody)!.color }}
+              />
+              <p className="text-sm font-semibold text-white">
+                {(hoveredBody || activeBody)!.name}
+              </p>
+            </div>
+            <p className="text-xs text-white/50 capitalize">
+              {(hoveredBody || activeBody)!.type}
+              {activeBody?.name === (hoveredBody || activeBody)!.name
+                ? " · playing"
+                : " · click to play"}
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* Zone labels */}
+      {/* ── Body count label ──────────────────────────────────── */}
       <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-center">
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-white/30">
           {star.hasOrbitingBodies
             ? `${star.orbitingBodies.length} orbiting ${star.orbitingBodies.length === 1 ? "body" : "bodies"}`
-            : "Orbital zones"}
+            : "Generated orbital system"}
         </p>
       </div>
-    </motion.div>
+    </div>
   );
 }

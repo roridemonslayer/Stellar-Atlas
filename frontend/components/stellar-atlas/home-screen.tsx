@@ -6,6 +6,7 @@ import { DailyStar } from "./daily-star";
 import type { StarData } from "@/lib/star-data";
 import { Button } from "@/components/ui/button";
 import { Sparkles, BookMarked, Volume2, VolumeX } from "lucide-react";
+import {Starfield} from "@/components/stellar-atlas/starfield";
 
 interface HomeScreenProps {
   onGenerateStar: () => void;

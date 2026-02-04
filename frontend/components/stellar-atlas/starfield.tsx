@@ -31,7 +31,7 @@ interface StarfieldProps {
 }
 
 export function Starfield({
-  starCount = 1500,
+  starCount = 5000,
   speed = 0.3,
   ambient = false,
 }: StarfieldProps) {
@@ -72,7 +72,7 @@ export function Starfield({
         y: Math.random() * 3000 - 1500,
         z: Math.random() * 1500,
         size,
-        opacity: Math.random() * 0.3 + 0.07,
+        opacity: Math.random() * 0.5 + 0.2,
         twinkleSpeed: Math.random() * 0.02 + 0.005,
         twinklePhase: Math.random() * Math.PI * 2,
         color: starColors[Math.floor(Math.random() * starColors.length)],
