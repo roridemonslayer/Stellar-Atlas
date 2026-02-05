@@ -3,7 +3,7 @@ export interface StarData {
   name: string;
   type: StarType;
   temperature: number;
-  sizeRatio: number; // Compared to the Sun
+  sizeRatio: number;
   luminosity: number;
   lifespan: string;
   funFact: string;
@@ -12,21 +12,16 @@ export interface StarData {
     region: string;
     distanceFromEarth: string;
     distanceLightYears: number;
-    constellation?: string; 
+    constellation?: string;
   };
   hasOrbitingBodies: boolean;
   orbitingBodies: OrbitingBody[];
   generatedAt: Date | string;
-
-  realStar?:boolean; 
-  catalogId?:string;
-  mass?:number;
-  spectralType?:string;
-};
-
-
-
-
+  realStar?: boolean;
+  catalogId?: string;
+  mass?: number;
+  spectralType?: string;
+}
 
 export interface OrbitingBody {
   name: string;
@@ -47,49 +42,15 @@ export type StarType =
   | "Red Supergiant";
 
 const starPrefixes = [
-  "Astra",
-  "Nova",
-  "Celeste",
-  "Orion",
-  "Lyra",
-  "Vega",
-  "Sirius",
-  "Polaris",
-  "Altair",
-  "Rigel",
-  "Betel",
-  "Castor",
-  "Procyon",
-  "Antares",
-  "Aldebaran",
-  "Arcturus",
-  "Capella",
-  "Deneb",
-  "Fomalhaut",
-  "Spica",
+  "Astra", "Nova", "Celeste", "Orion", "Lyra", "Vega", "Sirius", "Polaris",
+  "Altair", "Rigel", "Betel", "Castor", "Procyon", "Antares", "Aldebaran",
+  "Arcturus", "Capella", "Deneb", "Fomalhaut", "Spica",
 ];
 
 const starSuffixes = [
-  "Prime",
-  "Major",
-  "Minor",
-  "Alpha",
-  "Beta",
-  "Gamma",
-  "Delta",
-  "Epsilon",
-  "Zeta",
-  "Eta",
-  "Theta",
-  "Iota",
-  "Kappa",
-  "Lambda",
-  "Mu",
-  "Nu",
-  "Xi",
-  "Omicron",
-  "Pi",
-  "Rho",
+  "Prime", "Major", "Minor", "Alpha", "Beta", "Gamma", "Delta", "Epsilon",
+  "Zeta", "Eta", "Theta", "Iota", "Kappa", "Lambda", "Mu", "Nu", "Xi",
+  "Omicron", "Pi", "Rho",
 ];
 
 const galaxies = [
@@ -110,6 +71,49 @@ const regions = [
   "Outer Rim",
   "Carina-Sagittarius Arm",
   "Scutum-Centaurus Arm",
+];
+
+const constellations = [
+  "Andromeda",
+  "Aquarius",
+  "Aquila",
+  "Ara",
+  "Aries",
+  "Auriga",
+  "Boötes",
+  "Cancer",
+  "Canis Major",
+  "Canis Minor",
+  "Capricornus",
+  "Cassiopeia",
+  "Centaurus",
+  "Cepheus",
+  "Cetus",
+  "Corona Borealis",
+  "Corvus",
+  "Crater",
+  "Crux",
+  "Cygnus",
+  "Delphinus",
+  "Draco",
+  "Gemini",
+  "Hercules",
+  "Hydra",
+  "Leo",
+  "Libra",
+  "Lupus",
+  "Lyra",
+  "Ophiuchus",
+  "Orion",
+  "Pegasus",
+  "Perseus",
+  "Pisces",
+  "Sagittarius",
+  "Scorpius",
+  "Taurus",
+  "Ursa Major",
+  "Ursa Minor",
+  "Virgo",
 ];
 
 const funFacts: Record<StarType, string[]> = {
@@ -169,7 +173,10 @@ const funFacts: Record<StarType, string[]> = {
   ],
 };
 
-const planetPrefixes = ["Terra", "Aqua", "Ignis", "Ventus", "Petra", "Luna", "Frost", "Ember", "Dust", "Storm"];
+const planetPrefixes = [
+  "Terra", "Aqua", "Ignis", "Ventus", "Petra",
+  "Luna", "Frost", "Ember", "Dust", "Storm"
+];
 
 function generateStarName(): string {
   const prefix = starPrefixes[Math.floor(Math.random() * starPrefixes.length)];
@@ -290,6 +297,11 @@ export function generateStar(): StarData {
   const facts = funFacts[type];
   const orbitingBodies = generateOrbitingBodies();
   const distanceLightYears = Math.floor(Math.random() * 100000) + 10;
+  
+  // 80% chance of having a constellation
+  const constellation = Math.random() < 0.8
+    ? constellations[Math.floor(Math.random() * constellations.length)]
+    : undefined;
 
   return {
     id: `star-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -308,6 +320,7 @@ export function generateStar(): StarData {
           ? `${(distanceLightYears / 1000).toFixed(1)}k light years`
           : `${distanceLightYears} light years`,
       distanceLightYears,
+      constellation,
     },
     hasOrbitingBodies: orbitingBodies.length > 0,
     orbitingBodies,
@@ -315,12 +328,10 @@ export function generateStar(): StarData {
   };
 }
 
-// Generate a daily star based on the date
 export function generateDailyStar(): StarData {
   const today = new Date();
   const seed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
   
-  // Use seeded random for consistency
   const seededRandom = (s: number) => {
     const x = Math.sin(s) * 10000;
     return x - Math.floor(x);
@@ -344,6 +355,9 @@ export function generateDailyStar(): StarData {
 
   const prefix = starPrefixes[Math.floor(seededRandom(seed + 2) * starPrefixes.length)];
   const suffix = starSuffixes[Math.floor(seededRandom(seed + 3) * starSuffixes.length)];
+  
+  // Daily star always has a constellation
+  const constellation = constellations[Math.floor(seededRandom(seed + 8) * constellations.length)];
 
   return {
     id: `daily-${seed}`,
@@ -362,6 +376,7 @@ export function generateDailyStar(): StarData {
           ? `${(distanceLightYears / 1000).toFixed(1)}k light years`
           : `${distanceLightYears} light years`,
       distanceLightYears,
+      constellation,
     },
     hasOrbitingBodies: seededRandom(seed + 7) > 0.4,
     orbitingBodies: [],

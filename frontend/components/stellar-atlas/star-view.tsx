@@ -6,8 +6,10 @@ import type { StarData } from "@/lib/star-data";
 import { StarOrb } from "./star-orb";
 import { StarInfoCard, StarFactCard, StarLocationCard } from "./star-info-card";
 import { OrbitView } from "./orbit-view";
+import { ConstellationView } from "./constellation-view";
+import { AudioTestPanel } from "./audio-test-panel";
 import { Button } from "@/components/ui/button";
-import { Star, Orbit, ArrowLeft, BookmarkPlus, BookmarkCheck } from "lucide-react";
+import { Star, Orbit, ArrowLeft, BookmarkPlus, BookmarkCheck, Compass, Volume2 } from "lucide-react";
 
 interface StarViewProps {
   star: StarData;
@@ -18,6 +20,8 @@ interface StarViewProps {
 
 export function StarView({ star, onBack, onSave, isSaved }: StarViewProps) {
   const [showOrbitView, setShowOrbitView] = useState(false);
+  const [showConstellation, setShowConstellation] = useState(false);
+  const [showAudioTest, setShowAudioTest] = useState(false);
 
   return (
     <motion.div
@@ -46,6 +50,33 @@ export function StarView({ star, onBack, onSave, isSaved }: StarViewProps) {
           </Button>
 
           <div className="flex items-center gap-2">
+            {/* Audio Test Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowAudioTest(true)}
+              className="text-muted-foreground hover:text-foreground gap-2"
+              title="Test Audio System"
+            >
+              <Volume2 className="w-4 h-4" />
+              <span className="hidden sm:inline">Audio</span>
+            </Button>
+
+            {/* Constellation Button - only show if star has constellation */}
+            {star.location.constellation && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowConstellation(true)}
+                className="text-muted-foreground hover:text-foreground gap-2"
+                title={`View ${star.location.constellation} constellation`}
+              >
+                <Compass className="w-4 h-4" />
+                <span className="hidden sm:inline">Constellation</span>
+              </Button>
+            )}
+
+            {/* Orbit View Toggle */}
             <Button
               variant="ghost"
               size="sm"
@@ -58,6 +89,7 @@ export function StarView({ star, onBack, onSave, isSaved }: StarViewProps) {
               </span>
             </Button>
 
+            {/* Save Button */}
             <Button
               variant={isSaved ? "secondary" : "ghost"}
               size="sm"
@@ -98,6 +130,11 @@ export function StarView({ star, onBack, onSave, isSaved }: StarViewProps) {
                     {star.name}
                   </h2>
                   <p className="text-muted-foreground">{star.type}</p>
+                  {star.hasOrbitingBodies && (
+                    <p className="text-sm text-muted-foreground/60 mt-2">
+                      Click planets to hear their unique tones
+                    </p>
+                  )}
                 </motion.div>
               </motion.div>
             ) : (
@@ -143,6 +180,22 @@ export function StarView({ star, onBack, onSave, isSaved }: StarViewProps) {
                   <h1 className="text-4xl sm:text-5xl font-bold text-foreground tracking-tight text-balance">
                     {star.name}
                   </h1>
+                  
+                  {/* Constellation quick link */}
+                  {star.location.constellation && (
+                    <motion.button
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.6 }}
+                      onClick={() => setShowConstellation(true)}
+                      className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-accent/10 hover:bg-accent/20 rounded-full transition-colors group"
+                    >
+                      <Compass className="w-4 h-4 text-accent group-hover:rotate-45 transition-transform" />
+                      <span className="text-sm text-accent font-medium">
+                        View in {star.location.constellation}
+                      </span>
+                    </motion.button>
+                  )}
                 </motion.div>
 
                 {/* Info cards grid */}
@@ -158,6 +211,19 @@ export function StarView({ star, onBack, onSave, isSaved }: StarViewProps) {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Constellation View Modal */}
+      <ConstellationView
+        star={star}
+        isOpen={showConstellation}
+        onClose={() => setShowConstellation(false)}
+      />
+
+      {/* Audio Test Panel */}
+      <AudioTestPanel
+        isOpen={showAudioTest}
+        onClose={() => setShowAudioTest(false)}
+      />
     </motion.div>
   );
 }
