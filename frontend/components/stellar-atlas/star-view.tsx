@@ -1,13 +1,14 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { StarData } from "@/lib/star-data";
 import { StarOrb } from "./star-orb";
 import { StarInfoCard, StarFactCard, StarLocationCard } from "./star-info-card";
 import { OrbitView } from "./orbit-view";
 import { ConstellationView } from "./constellation-view";
 import { AudioTestPanel } from "./audio-test-panel";
+import { audioManager } from "@/lib/audio-manager";
 import { Button } from "@/components/ui/button";
 import { Star, Orbit, ArrowLeft, BookmarkPlus, BookmarkCheck, Compass, Volume2 } from "lucide-react";
 
@@ -22,6 +23,34 @@ export function StarView({ star, onBack, onSave, isSaved }: StarViewProps) {
   const [showOrbitView, setShowOrbitView] = useState(false);
   const [showConstellation, setShowConstellation] = useState(false);
   const [showAudioTest, setShowAudioTest] = useState(false);
+  const [audioInitialized, setAudioInitialized] = useState(false);
+
+  // Initialize audio when component mounts
+  useEffect(() => {
+    const initAudio = async () => {
+      const initialized = await audioManager.initialize();
+      setAudioInitialized(initialized);
+      if (!initialized) {
+        console.log("Audio will initialize on first user interaction");
+      }
+    };
+    initAudio();
+
+    // Cleanup when component unmounts
+    return () => {
+      audioManager.stopAll();
+    };
+  }, []);
+
+  // Handle switching to orbit view
+  const handleOrbitViewToggle = async () => {
+    if (!showOrbitView && !audioInitialized) {
+      // Try to initialize audio when user clicks to orbit view
+      const initialized = await audioManager.initialize();
+      setAudioInitialized(initialized);
+    }
+    setShowOrbitView(!showOrbitView);
+  };
 
   return (
     <motion.div
@@ -80,7 +109,7 @@ export function StarView({ star, onBack, onSave, isSaved }: StarViewProps) {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setShowOrbitView(!showOrbitView)}
+              onClick={handleOrbitViewToggle}
               className="text-muted-foreground hover:text-foreground gap-2"
             >
               <Orbit className="w-4 h-4" />
@@ -133,6 +162,11 @@ export function StarView({ star, onBack, onSave, isSaved }: StarViewProps) {
                   {star.hasOrbitingBodies && (
                     <p className="text-sm text-muted-foreground/60 mt-2">
                       Click planets to hear their unique tones
+                    </p>
+                  )}
+                  {!audioInitialized && star.hasOrbitingBodies && (
+                    <p className="text-xs text-yellow-500/60 mt-1">
+                      Click a planet to enable audio
                     </p>
                   )}
                 </motion.div>
