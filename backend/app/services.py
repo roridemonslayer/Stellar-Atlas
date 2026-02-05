@@ -44,8 +44,6 @@ FAMOUS_STARS = [
         "hasExoplanets": False
     },
     {
-        # Sirius is spectral type A1V — the "V" means main sequence, not giant.
-        # Its size ratio of 1.71 confirms this.  Corrected from "Blue Giant".
         "name": "Sirius",
         "type": "White Star",
         "temperature": 9940,
@@ -74,8 +72,6 @@ FAMOUS_STARS = [
         "hasExoplanets": False
     },
     {
-        # Vega is spectral type A0V — same luminosity class as Sirius.
-        # Corrected from "Blue Giant" to "White Star".
         "name": "Vega",
         "type": "White Star",
         "temperature": 9602,
@@ -174,9 +170,6 @@ FAMOUS_STARS = [
         "hasExoplanets": False
     },
     {
-        # Altair is spectral type A7V — main sequence, not a white dwarf remnant.
-        # Its mass (1.79) and size ratio (1.79) confirm an active main-sequence star.
-        # Corrected from "White Dwarf".
         "name": "Altair",
         "type": "White Star",
         "temperature": 7550,
@@ -231,22 +224,50 @@ FAMOUS_STARS = [
         "spectralType": "M8V",
         "funFact": "TRAPPIST-1 has seven Earth-sized planets, three of which are in the habitable zone!",
         "hasExoplanets": True
+    },
+    {
+        "name": "Kepler-452",
+        "type": "Yellow Dwarf",
+        "temperature": 5757,
+        "sizeRatio": 1.11,
+        "luminosity": 1.2,
+        "mass": 1.04,
+        "distance": 1402,
+        "constellation": "Cygnus",
+        "catalogId": "KOI-7016",
+        "spectralType": "G2V",
+        "funFact": "Kepler-452 hosts Kepler-452b, dubbed 'Earth's cousin' - the most Earth-like exoplanet discovered!",
+        "hasExoplanets": True
+    },
+    {
+        "name": "51 Pegasi",
+        "type": "Yellow Dwarf",
+        "temperature": 5793,
+        "sizeRatio": 1.27,
+        "luminosity": 1.34,
+        "mass": 1.11,
+        "distance": 50.9,
+        "constellation": "Pegasus",
+        "catalogId": "HD 217014",
+        "spectralType": "G2IV",
+        "funFact": "51 Pegasi was the first Sun-like star found to have an exoplanet, revolutionizing astronomy!",
+        "hasExoplanets": True
     }
 ]
 
-# Exoplanet data
+# Exoplanet data with accurate orbital distances in AU
 EXOPLANET_DATA = {
     "Proxima Centauri": [
         {
             "name": "Proxima Centauri b",
-            "distance": 0.0485,
+            "distance": 0.0485,  # AU
             "mass": 1.17,
             "radius": 1.1,
             "period": 11.186
         },
         {
             "name": "Proxima Centauri d",
-            "distance": 0.029,
+            "distance": 0.029,  # AU
             "mass": 0.26,
             "radius": 0.81,
             "period": 5.122
@@ -255,7 +276,7 @@ EXOPLANET_DATA = {
     "Aldebaran": [
         {
             "name": "Aldebaran b",
-            "distance": 1.46,
+            "distance": 1.46,  # AU
             "mass": 6.47,
             "radius": 2.3,
             "period": 628.96
@@ -264,52 +285,70 @@ EXOPLANET_DATA = {
     "TRAPPIST-1": [
         {
             "name": "TRAPPIST-1b",
-            "distance": 0.01154,
+            "distance": 0.01154,  # AU
             "mass": 1.017,
             "radius": 1.116,
             "period": 1.51
         },
         {
             "name": "TRAPPIST-1c",
-            "distance": 0.01580,
+            "distance": 0.01580,  # AU
             "mass": 1.156,
             "radius": 1.097,
             "period": 2.42
         },
         {
             "name": "TRAPPIST-1d",
-            "distance": 0.02227,
+            "distance": 0.02227,  # AU
             "mass": 0.297,
             "radius": 0.788,
             "period": 4.05
         },
         {
             "name": "TRAPPIST-1e",
-            "distance": 0.02925,
+            "distance": 0.02925,  # AU
             "mass": 0.772,
             "radius": 0.920,
             "period": 6.10
         },
         {
             "name": "TRAPPIST-1f",
-            "distance": 0.03849,
+            "distance": 0.03849,  # AU
             "mass": 0.934,
             "radius": 1.045,
             "period": 9.21
         },
         {
             "name": "TRAPPIST-1g",
-            "distance": 0.04683,
+            "distance": 0.04683,  # AU
             "mass": 1.148,
             "radius": 1.129,
             "period": 12.35
         },
         {
             "name": "TRAPPIST-1h",
-            "distance": 0.06189,
+            "distance": 0.06189,  # AU
             "mass": 0.331,
             "radius": 0.755,
             "period": 18.77
+        }
+    ],
+    "Kepler-452": [
+        {
+            "name": "Kepler-452b",
+            "distance": 1.046,  # AU
+            "mass": 5.0,
+            "radius": 1.63,
+            "period": 384.8
+        }
+    ],
+    "51 Pegasi": [
+        {
+            "name": "51 Pegasi b",
+            "distance": 0.0527,  # AU (Hot Jupiter)
+            "mass": 0.468,
+            "radius": 1.9,
+            "period": 4.23
         }
     ]
 }
@@ -331,8 +370,40 @@ class NASAStarService:
         return None
 
     def fetch_exoplanet_data(self, star_name: str) -> List[dict]:
-        """Fetch exoplanet data for a star"""
-        return EXOPLANET_DATA.get(star_name, [])
+        """
+        Fetch exoplanet data for a star
+        Converts AU distances to visual orbital radii (50-180 pixel range)
+        """
+        planets = EXOPLANET_DATA.get(star_name, [])
+        
+        if not planets:
+            return []
+        
+        # Convert AU to visual radii
+        # Use logarithmic scale for better spacing
+        visual_planets = []
+        for planet in planets:
+            au = planet["distance"]
+            
+            # Logarithmic mapping: 0.01 AU → 60px, 1.5 AU → 170px
+            if au <= 0.01:
+                visual_radius = 60
+            elif au >= 1.5:
+                visual_radius = 170
+            else:
+                # Log scale between min and max
+                import math
+                log_au = math.log10(au)
+                log_min = math.log10(0.01)
+                log_max = math.log10(1.5)
+                visual_radius = 60 + ((log_au - log_min) / (log_max - log_min)) * 110
+            
+            visual_planets.append({
+                **planet,
+                "visual_radius": round(visual_radius)
+            })
+        
+        return visual_planets
 
     def get_region_for_constellation(self, constellation: str) -> str:
         """Map constellation to galactic region"""
@@ -349,7 +420,8 @@ class NASAStarService:
             "Aquila": "Orion Arm",
             "Virgo": "Orion Arm",
             "Canis Minor": "Orion Arm",
-            "Aquarius": "Orion Arm"
+            "Aquarius": "Orion Arm",
+            "Pegasus": "Perseus Arm"
         }
         return region_map.get(constellation, "Orion Arm")
 
@@ -359,9 +431,6 @@ class NASAStarService:
             "Red Dwarf": f"{int(4 * (1 / max(mass, 0.1)) ** 2.5)} trillion years",
             "Orange Dwarf": f"{int(20 * (1 / max(mass, 0.5)) ** 2.5)} billion years",
             "Yellow Dwarf": f"{int(10 * (1 / max(mass, 0.8)) ** 2.5)} billion years",
-            # A-type main sequence stars — shorter-lived than Sun-like stars
-            # due to higher mass.  Formula yields ~1-2 billion years for
-            # typical masses in this range (1.7–2.1 solar masses).
             "White Star": f"{int(10 * (1 / max(mass, 1.5)) ** 2.5)} billion years",
             "White Dwarf": "Effectively eternal (cooling slowly)",
             "Blue Giant": f"{int(500 / max(mass, 5))} million years",

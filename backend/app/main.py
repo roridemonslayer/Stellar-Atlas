@@ -31,6 +31,7 @@ app.add_middleware(
         "http://localhost:3000",  # Next.js dev server
         "http://localhost:3001",
         "http://127.0.0.1:3000",
+        "https://*.vercel.app",  # Vercel deployments
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -46,13 +47,21 @@ def format_star_data(raw_star: dict) -> StarData:
     if raw_star.get("hasExoplanets"):
         planet_data = nasa_service.fetch_exoplanet_data(raw_star["name"])
 
-        colors = ["#a8d5ba", "#d4a5a5", "#a5c4d4", "#d4cfa5", "#c4a5d4", "#d4b5a5"]
+        # Planet colors based on type/temperature
+        colors = [
+            "#d4a5a5",  # Rocky/Mars-like
+            "#a8d5ba",  # Earth-like
+            "#a5c4d4",  # Water world
+            "#d4cfa5",  # Desert planet
+            "#c4a5d4",  # Gas giant
+            "#d4b5a5",  # Ice giant
+        ]
 
         for i, planet in enumerate(planet_data):
             exoplanets.append(OrbitingBody(
                 name=planet["name"],
                 type="planet",
-                orbitRadius=planet["distance"] * 100,  # Convert AU to visual units
+                orbitRadius=planet["visual_radius"],  # Use pre-calculated visual radius
                 color=colors[i % len(colors)],
                 mass=planet.get("mass"),
                 radius=planet.get("radius"),
@@ -82,9 +91,7 @@ def format_star_data(raw_star: dict) -> StarData:
         raw_star.get("mass", 1.0)
     )
 
-    # Stable ID from name only — no timestamp.
-    # The frontend uses id equality to track saved stars, so this must
-    # be the same value every time the same star is returned.
+    # Stable ID from name only
     star_id = f"nasa-{raw_star['name'].lower().replace(' ', '-')}"
 
     return StarData(
@@ -132,7 +139,7 @@ async def generate_star():
     try:
         raw_star = nasa_service.get_random_real_star()
         star = format_star_data(raw_star)
-        logger.info(f"Generated star: {star.name}")
+        logger.info(f"Generated star: {star.name} ({len(star.orbitingBodies)} planets)")
         return star
     except Exception as e:
         logger.error(f"Error generating star: {str(e)}")
@@ -161,10 +168,6 @@ async def get_daily_star():
         raise HTTPException(status_code=500, detail=f"Error getting daily star: {str(e)}")
 
 
-# ─── /list MUST come before /{star_name} ────────────────────────────────────
-# FastAPI matches routes top-to-bottom.  If {star_name} is first, a request to
-# /api/stars/list hits that wildcard with star_name="list" and never reaches
-# this handler.
 @app.get("/api/stars/list")
 async def list_available_stars():
     """List all available stars in the database."""
@@ -214,7 +217,8 @@ async def health_check():
     return {
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
-        "available_stars": len(FAMOUS_STARS)
+        "available_stars": len(FAMOUS_STARS),
+        "stars_with_planets": len([s for s in FAMOUS_STARS if s.get("hasExoplanets")])
     }
 
 
