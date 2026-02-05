@@ -39,14 +39,18 @@ export function OrbitView({ star }: OrbitViewProps) {
   // Use actual orbiting bodies from the star data
   const bodies = star.orbitingBodies || [];
 
-  // Initialize audio on component mount
+  // Initialize audio on component mount and set star temperature
   useEffect(() => {
     const initAudio = async () => {
       const initialized = await audioManager.initialize();
-      setAudioInitialized(initialized);
+      if (initialized) {
+        // Set the star's temperature for frequency calculations
+        audioManager.setStarTemperature(star.temperature);
+        setAudioInitialized(true);
+      }
     };
     initAudio();
-  }, []);
+  }, [star.temperature]);
 
   // Audio lifecycle - play tone when a planet becomes active
   useEffect(() => {
@@ -93,11 +97,14 @@ export function OrbitView({ star }: OrbitViewProps) {
     // Initialize audio on first click if needed
     if (!audioInitialized) {
       const initialized = await audioManager.initialize();
-      setAudioInitialized(initialized);
+      if (initialized) {
+        audioManager.setStarTemperature(star.temperature);
+        setAudioInitialized(initialized);
+      }
     }
     
     setActiveBody((prev) => (prev?.name === body.name ? null : body));
-  }, [audioInitialized]);
+  }, [audioInitialized, star.temperature]);
 
   // Click on empty space: deactivate
   const handleBackdropClick = useCallback(() => {
@@ -131,6 +138,17 @@ export function OrbitView({ star }: OrbitViewProps) {
       </div>
     );
   }
+
+  // Get temperature description for tooltip
+  const getTemperatureDescription = (temp: number): string => {
+    if (temp < 3500) return "Cool red dwarf - deep bass tones";
+    if (temp < 5000) return "Orange star - warm low tones";
+    if (temp < 6000) return "Yellow star - mid-range tones";
+    if (temp < 7500) return "White star - bright tones";
+    if (temp < 10000) return "Hot white star - high tones";
+    if (temp < 30000) return "Blue star - soaring treble";
+    return "Blue giant - highest tones";
+  };
 
   return (
     <div
@@ -272,17 +290,20 @@ export function OrbitView({ star }: OrbitViewProps) {
             <p className="text-xs text-white/50 capitalize">
               {(hoveredBody || activeBody)!.type}
               {activeBody?.name === (hoveredBody || activeBody)!.name
-                ? " • playing"
-                : " • click to play"}
+                ? " • playing harmonic tone"
+                : " • click to hear sound"}
             </p>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Body count label */}
-      <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-center">
-        <p className="text-xs text-white/30">
-          {bodies.length} confirmed {bodies.length === 1 ? "exoplanet" : "exoplanets"}
+      {/* Star temperature info */}
+      <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 text-center">
+        <p className="text-xs text-white/40">
+          {star.temperature.toLocaleString()}K
+        </p>
+        <p className="text-xs text-white/30 mt-1">
+          {getTemperatureDescription(star.temperature)}
         </p>
       </div>
     </div>
