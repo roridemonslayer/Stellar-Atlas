@@ -1,13 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  typescript: {
-    ignoreBuildErrors: true,
-  },
+  output: 'export',
+  basePath: '/Stellar-Atlas',
   images: {
     unoptimized: true,
   },
-  output: 'export',
-  basePath: '/Stellar-Atlas',
+  typescript: {
+    ignoreBuildErrors: true,
+  },
 }
 
 export default nextConfig
