@@ -1,0 +1,5 @@
+:HL["/Stellar-Atlas/_next/static/chunks/cf21f7f14b5ec3a5.css","style"]
+:HL["/Stellar-Atlas/_next/static/chunks/68a96a16691d7a09.css","style"]
+:HL["/Stellar-Atlas/_next/static/media/0c89a48fa5027cee-s.p.4564287c.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
+:HL["/Stellar-Atlas/_next/static/media/797e433ab948586e-s.p.dbea232f.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
+0:{"buildId":"e09BtL0gRA_glLY98kqo6","tree":{"name":"","paramType":null,"paramKey":"","hasRuntimePrefetch":false,"slots":{"children":{"name":"__PAGE__","paramType":null,"paramKey":"__PAGE__","hasRuntimePrefetch":false,"slots":null,"isRootLayout":false}},"isRootLayout":true},"staleTime":300}

@@ -1,0 +1,9 @@
+1:"$Sreact.fragment"
+2:I[47257,["/Stellar-Atlas/_next/static/chunks/42879de7b8087bc9.js"],"ClientPageRoot"]
+3:I[31713,["/Stellar-Atlas/_next/static/chunks/0c6932420e96e619.js","/Stellar-Atlas/_next/static/chunks/1217dbba141bc71b.js","/Stellar-Atlas/_next/static/chunks/e4dc1926bc14d8f3.js"],"default"]
+6:I[97367,["/Stellar-Atlas/_next/static/chunks/42879de7b8087bc9.js"],"OutletBoundary"]
+7:"$Sreact.suspense"
+0:{"buildId":"e09BtL0gRA_glLY98kqo6","rsc":["$","$1","c",{"children":[["$","$L2",null,{"Component":"$3","serverProvidedParams":{"searchParams":{},"params":{},"promises":["$@4","$@5"]}}],[["$","script","script-0",{"src":"/Stellar-Atlas/_next/static/chunks/1217dbba141bc71b.js","async":true}],["$","script","script-1",{"src":"/Stellar-Atlas/_next/static/chunks/e4dc1926bc14d8f3.js","async":true}]],["$","$L6",null,{"children":["$","$7",null,{"name":"Next.MetadataOutlet","children":"$@8"}]}]]}],"loading":null,"isPartial":false}
+4:{}
+5:"$0:rsc:props:children:0:props:serverProvidedParams:params"
+8:null
